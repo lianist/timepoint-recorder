@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시점 표시기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            min-height: calc(100vh - 40px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .content {
+            padding: 30px 20px;
+        }
+
+        .input-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .input-group input {
+            width: 100%;
+            max-width: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 18px;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            font-size: 20px;
+            padding: 20px 40px;
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffa8a8 100%);
+        }
+
+        .stopwatch {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 15px;
+        }
+
+        .stopwatch-display {
+            font-size: 48px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .page-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .page-button {
+            aspect-ratio: 1;
+            border: 3px solid #e0e0e0;
+            border-radius: 50%;
+            background: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 60px;
+        }
+
+        .page-button:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .page-button.clicked {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .page-number {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .time-display {
+            font-size: 10px;
+            margin-top: 4px;
+            font-weight: 500;
+            opacity: 0.8;
+        }
+
+        .result-section {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .result-section h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+            text-align: center;
+        }
+
+        .result-array {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            word-break: break-all;
+            line-height: 1.6;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 300px;
+            margin: 20px;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-cancel {
+            background: #ccc;
+            color: #333;
+        }
+
+        @media (max-width: 480px) {
+            .page-grid {
+                gap: 10px;
+            }
+            
+            .page-button {
+                min-height: 50px;
+            }
+            
+            .page-number {
+                font-size: 12px;
+            }
+            
+            .time-display {
+                font-size: 9px;
+            }
+            
+            .stopwatch-display {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>시점 표시기</h1>
+            <p>스톱워치와 페이지별 시점 기록</p>
+        </div>
+
+        <div class="content">
+            <!-- 초기 설정 화면 -->
+            <div id="setup-screen">
+                <div class="input-section">
+                    <div class="input-group">
+                        <label for="start-page">시작 페이지</label>
+                        <input type="number" id="start-page" value="1" min="1" max="9999">
+                    </div>
+                    <div class="input-group">
+                        <label for="end-page">종료 페이지</label>
+                        <input type="number" id="end-page" value="50" min="1" max="9999">
+                    </div>
+                    <button class="btn" onclick="initializePages()">시점 표시 시작하기</button>
+                </div>
+            </div>
+
+            <!-- 메인 화면 -->
+            <div id="main-screen" class="hidden">
+                <div class="stopwatch">
+                    <div class="stopwatch-display" id="stopwatch-display">00:00</div>
+                    <button class="btn btn-start" id="start-btn" onclick="startStopwatch()">▶ 시작</button>
+                    <button class="btn btn-stop hidden" id="stop-btn" onclick="showStopModal()">⏹ 종료</button>
+                </div>
+
+                <div class="page-grid" id="page-grid"></div>
+
+                <div class="result-section hidden" id="result-section">
+                    <h3>시점 배열 결과</h3>
+                    <div class="result-array" id="result-array"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 종료 확인 모달 -->
+    <div id="stop-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>스톱워치를 종료하시겠습니까?</h3>
+            <div class="modal-buttons">
+                <button class="btn btn-cancel" onclick="hideStopModal()">취소</button>
+                <button class="btn" onclick="stopStopwatch()">종료</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let startPage = 1;
+        let endPage = 50;
+        let startTime = null;
+        let stopwatchInterval = null;
+        let pageTimings = {};
+        let isRunning = false;
+
+        // LocalStorage에 데이터 저장
+        function saveData() {
+            const data = {
+                startPage,
+                endPage,
+                pageTimings,
+                isRunning,
+                startTime: startTime ? startTime.getTime() : null
+            };
+            localStorage.setItem('stopwatch-data', JSON.stringify(data));
+        }
+
+        // LocalStorage에서 데이터 복원
+        function loadData() {
+            const saved = localStorage.getItem('stopwatch-data');
+            if (saved) {
+                const data = JSON.parse(saved);
+                startPage = data.startPage || 1;
+                endPage = data.endPage || 50;
+                pageTimings = data.pageTimings || {};
+                isRunning = data.isRunning || false;
+                if (data.startTime) {
+                    startTime = new Date(data.startTime);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        // 페이지 로드 시 데이터 복원
+        window.addEventListener('load', function() {
+            if (loadData() && isRunning) {
+                // 진행 중인 세션이 있다면 복원
+                document.getElementById('start-page').value = startPage;
+                document.getElementById('end-page').value = endPage;
+                initializePages();
+                restoreStopwatch();
+            }
+        });
+
+        // 페이지 언로드 시 데이터 저장
+        window.addEventListener('beforeunload', saveData);
+
+        function initializePages() {
+            startPage = parseInt(document.getElementById('start-page').value);
+            endPage = parseInt(document.getElementById('end-page').value);
+
+            if (startPage > endPage) {
+                alert('시작 페이지는 종료 페이지보다 작아야 합니다.');
+                return;
+            }
+
+            if (endPage - startPage > 1000) {
+                alert('페이지 수가 너무 많습니다. (최대 1000페이지)');
+                return;
+            }
+
+            pageTimings = {};
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('main-screen').classList.remove('hidden');
+            
+            generatePageGrid();
+            saveData();
+        }
+
+        function generatePageGrid() {
+            const grid = document.getElementById('page-grid');
+            grid.innerHTML = '';
+
+            for (let page = startPage; page <= endPage; page++) {
+                const button = document.createElement('div');
+                button.className = 'page-button';
+                button.innerHTML = `
+                    <span class="page-number">${page}</span>
+                    <span class="time-display" id="time-${page}"></span>
+                `;
+                button.onclick = () => recordPageTime(page);
+                grid.appendChild(button);
+            }
+        }
+
+        function startStopwatch() {
+            startTime = new Date();
+            isRunning = true;
+            document.getElementById('start-btn').classList.add('hidden');
+            document.getElementById('stop-btn').classList.remove('hidden');
+            
+            stopwatchInterval = setInterval(updateStopwatch, 100);
+            saveData();
+        }
+
+        function restoreStopwatch() {
+            if (startTime && isRunning) {
+                document.getElementById('start-btn').classList.add('hidden');
+                document.getElementById('stop-btn').classList.remove('hidden');
+                stopwatchInterval = setInterval(updateStopwatch, 100);
+                
+                // 기록된 페이지들 복원
+                for (let page in pageTimings) {
+                    const button = document.querySelector(`#page-grid .page-button:nth-child(${page - startPage + 1})`);
+                    if (button) {
+                        button.classList.add('clicked');
+                        document.getElementById(`time-${page}`).textContent = pageTimings[page];
+                    }
+                }
+            }
+        }
+
+        function updateStopwatch() {
+            if (!startTime) return;
+            
+            const now = new Date();
+            const elapsed = Math.floor((now - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            
+            document.getElementById('stopwatch-display').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function recordPageTime(page) {
+            if (!isRunning || !startTime) {
+                alert('먼저 스톱워치를 시작해주세요.');
+                return;
+            }
+
+            const now = new Date();
+            const elapsed = Math.floor((now - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            pageTimings[page] = timeString;
+            
+            const button = document.querySelector(`#page-grid .page-button:nth-child(${page - startPage + 1})`);
+            button.classList.add('clicked');
+            document.getElementById(`time-${page}`).textContent = timeString;
+            
+            saveData();
+        }
+
+        function showStopModal() {
+            document.getElementById('stop-modal').classList.remove('hidden');
+        }
+
+        function hideStopModal() {
+            document.getElementById('stop-modal').classList.add('hidden');
+        }
+
+        function stopStopwatch() {
+            clearInterval(stopwatchInterval);
+            isRunning = false;
+            document.getElementById('stop-modal').classList.add('hidden');
+            
+            generateTimeArray();
+            saveData();
+        }
+
+        function generateTimeArray() {
+            const timeArray = [];
+            
+            // 먼저 기록된 시간들을 초 단위로 변환
+            const recordedTimes = {};
+            for (let page in pageTimings) {
+                const [minutes, seconds] = pageTimings[page].split(':').map(Number);
+                recordedTimes[parseInt(page)] = minutes * 60 + seconds;
+            }
+            
+            // 각 페이지의 시간 계산
+            for (let page = startPage; page <= endPage; page++) {
+                if (recordedTimes[page] !== undefined) {
+                    // 기록된 시간이 있는 경우
+                    timeArray.push(pageTimings[page]);
+                } else {
+                    // 기록된 시간이 없는 경우 - 다음 기록된 페이지로부터 역산
+                    let nextRecordedPage = null;
+                    let nextRecordedTime = null;
+                    
+                    for (let nextPage = page + 1; nextPage <= endPage; nextPage++) {
+                        if (recordedTimes[nextPage] !== undefined) {
+                            nextRecordedPage = nextPage;
+                            nextRecordedTime = recordedTimes[nextPage];
+                            break;
+                        }
+                    }
+                    
+                    if (nextRecordedPage !== null) {
+                        // 역산하여 시간 계산
+                        const timeDiff = nextRecordedPage - page;
+                        const calculatedSeconds = Math.max(0, nextRecordedTime - timeDiff);
+                        const minutes = Math.floor(calculatedSeconds / 60);
+                        const seconds = calculatedSeconds % 60;
+                        timeArray.push(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+                    } else {
+                        // 다음 기록이 없는 경우, 이전 기록으로부터 1초씩 증가
+                        if (timeArray.length > 0) {
+                            const prevTime = timeArray[timeArray.length - 1];
+                            const [prevMinutes, prevSeconds] = prevTime.split(':').map(Number);
+                            const newSeconds = prevMinutes * 60 + prevSeconds + 1;
+                            const minutes = Math.floor(newSeconds / 60);
+                            const seconds = newSeconds % 60;
+                            timeArray.push(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+                        } else {
+                            timeArray.push('00:00');
+                        }
+                    }
+                }
+            }
+            
+            // 결과 표시
+            document.getElementById('result-section').classList.remove('hidden');
+            document.getElementById('result-array').textContent = JSON.stringify(timeArray, null, 2);
+        }
+    </script>
+</body>
+</html>
