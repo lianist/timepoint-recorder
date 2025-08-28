@@ -358,20 +358,42 @@
 
         // 페이지 로드 시 데이터 복원
         window.addEventListener('load', function() {
-            if (loadData() && isRunning && startTime) {
-                // 진행 중인 세션이 있다면 복원
-                document.getElementById('start-page').value = startPage;
-                document.getElementById('end-page').value = endPage;
-                initializePages();
-                restoreStopwatch();
-            } else {
-                // 데이터가 있지만 잘못된 상태라면 초기화
-                localStorage.removeItem('stopwatch-data');
-                isRunning = false;
-                startTime = null;
-                pageTimings = {};
+            try {
+                const hasValidSession = loadData() && isRunning && startTime && (new Date() - new Date(startTime)) < 4 * 60 * 60 * 1000; // 4시간 이내
+                
+                if (hasValidSession) {
+                    // 진행 중인 유효한 세션이 있다면 복원
+                    document.getElementById('start-page').value = startPage;
+                    document.getElementById('end-page').value = endPage;
+                    initializePages();
+                    restoreStopwatch();
+                } else {
+                    // 그렇지 않으면 완전 초기화
+                    resetToInitialState();
+                }
+            } catch (error) {
+                // 오류 발생 시 완전 초기화
+                console.log('세션 복원 중 오류:', error);
+                resetToInitialState();
             }
         });
+
+        function resetToInitialState() {
+            localStorage.removeItem('stopwatch-data');
+            isRunning = false;
+            startTime = null;
+            pageTimings = {};
+            clearInterval(stopwatchInterval);
+            
+            // UI 초기화
+            document.getElementById('setup-screen').classList.remove('hidden');
+            document.getElementById('main-screen').classList.add('hidden');
+            document.getElementById('stop-modal').classList.add('hidden');
+            document.getElementById('result-section').classList.add('hidden');
+            document.getElementById('start-btn').classList.remove('hidden');
+            document.getElementById('stop-btn').classList.add('hidden');
+            document.getElementById('stopwatch-display').textContent = '00:00';
+        }
 
         // 페이지 언로드 시 데이터 저장
         window.addEventListener('beforeunload', saveData);
@@ -426,17 +448,26 @@
 
         function restoreStopwatch() {
             if (startTime && isRunning) {
-                document.getElementById('start-btn').classList.add('hidden');
-                document.getElementById('stop-btn').classList.remove('hidden');
-                stopwatchInterval = setInterval(updateStopwatch, 100);
-                
-                // 기록된 페이지들 복원
-                for (let page in pageTimings) {
-                    const button = document.querySelector(`#page-grid .page-button:nth-child(${page - startPage + 1})`);
-                    if (button) {
-                        button.classList.add('clicked');
-                        document.getElementById(`time-${page}`).textContent = pageTimings[page];
+                try {
+                    document.getElementById('start-btn').classList.add('hidden');
+                    document.getElementById('stop-btn').classList.remove('hidden');
+                    stopwatchInterval = setInterval(updateStopwatch, 100);
+                    
+                    // 기록된 페이지들 복원
+                    for (let page in pageTimings) {
+                        const pageIndex = parseInt(page) - startPage + 1;
+                        const button = document.querySelector(`#page-grid .page-button:nth-child(${pageIndex})`);
+                        if (button) {
+                            button.classList.add('clicked');
+                            const timeElement = document.getElementById(`time-${page}`);
+                            if (timeElement) {
+                                timeElement.textContent = pageTimings[page];
+                            }
+                        }
                     }
+                } catch (error) {
+                    console.log('스톱워치 복원 중 오류:', error);
+                    resetToInitialState();
                 }
             }
         }
