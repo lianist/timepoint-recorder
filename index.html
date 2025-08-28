@@ -358,12 +358,18 @@
 
         // 페이지 로드 시 데이터 복원
         window.addEventListener('load', function() {
-            if (loadData() && isRunning) {
+            if (loadData() && isRunning && startTime) {
                 // 진행 중인 세션이 있다면 복원
                 document.getElementById('start-page').value = startPage;
                 document.getElementById('end-page').value = endPage;
                 initializePages();
                 restoreStopwatch();
+            } else {
+                // 데이터가 있지만 잘못된 상태라면 초기화
+                localStorage.removeItem('stopwatch-data');
+                isRunning = false;
+                startTime = null;
+                pageTimings = {};
             }
         });
 
