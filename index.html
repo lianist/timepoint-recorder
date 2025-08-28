@@ -203,7 +203,7 @@
         }
 
         .hidden {
-            display: none;
+            display: none !important;
         }
 
         .modal {
@@ -309,7 +309,7 @@
     </div>
 
     <!-- 종료 확인 모달 -->
-    <div id="stop-modal" class="modal hidden">
+    <div id="stop-modal" class="modal hidden" style="display: none;">
         <div class="modal-content">
             <h3>스톱워치를 종료하시겠습니까?</h3>
             <div class="modal-buttons">
@@ -356,43 +356,82 @@
             return false;
         }
 
-        // 페이지 로드 시 데이터 복원
+        // DOM 준비 시 즉시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            forceResetToInitialState();
+        });
+
+        // 페이지 로드 시 완전 초기화 후 필요시 데이터 복원
         window.addEventListener('load', function() {
+            // 먼저 완전 초기화
+            forceResetToInitialState();
+            
             try {
-                const hasValidSession = loadData() && isRunning && startTime && (new Date() - new Date(startTime)) < 4 * 60 * 60 * 1000; // 4시간 이내
-                
-                if (hasValidSession) {
-                    // 진행 중인 유효한 세션이 있다면 복원
-                    document.getElementById('start-page').value = startPage;
-                    document.getElementById('end-page').value = endPage;
-                    initializePages();
-                    restoreStopwatch();
-                } else {
-                    // 그렇지 않으면 완전 초기화
-                    resetToInitialState();
+                // 그 다음 유효한 세션이 있는지 확인
+                if (loadData() && isRunning && startTime) {
+                    const now = new Date();
+                    const sessionTime = new Date(startTime);
+                    const timeDiff = now - sessionTime;
+                    
+                    // 4시간 이내의 유효한 세션인지 확인
+                    if (timeDiff > 0 && timeDiff < 4 * 60 * 60 * 1000) {
+                        // 진행 중인 유효한 세션이 있다면 복원
+                        document.getElementById('start-page').value = startPage;
+                        document.getElementById('end-page').value = endPage;
+                        initializePages();
+                        restoreStopwatch();
+                        return;
+                    }
                 }
             } catch (error) {
-                // 오류 발생 시 완전 초기화
                 console.log('세션 복원 중 오류:', error);
-                resetToInitialState();
             }
+            
+            // 유효한 세션이 없으면 초기 상태 유지
+            forceResetToInitialState();
         });
 
         function resetToInitialState() {
+            forceResetToInitialState();
+        }
+
+        function forceResetToInitialState() {
+            // 데이터 완전 초기화
             localStorage.removeItem('stopwatch-data');
             isRunning = false;
             startTime = null;
             pageTimings = {};
-            clearInterval(stopwatchInterval);
             
-            // UI 초기화
-            document.getElementById('setup-screen').classList.remove('hidden');
-            document.getElementById('main-screen').classList.add('hidden');
-            document.getElementById('stop-modal').classList.add('hidden');
-            document.getElementById('result-section').classList.add('hidden');
-            document.getElementById('start-btn').classList.remove('hidden');
-            document.getElementById('stop-btn').classList.add('hidden');
-            document.getElementById('stopwatch-display').textContent = '00:00';
+            // 인터벌 정리
+            if (stopwatchInterval) {
+                clearInterval(stopwatchInterval);
+                stopwatchInterval = null;
+            }
+            
+            // UI 강제 초기화 (DOM이 로드된 후에만)
+            if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                const setupScreen = document.getElementById('setup-screen');
+                const mainScreen = document.getElementById('main-screen');
+                const stopModal = document.getElementById('stop-modal');
+                const resultSection = document.getElementById('result-section');
+                const startBtn = document.getElementById('start-btn');
+                const stopBtn = document.getElementById('stop-btn');
+                const stopwatchDisplay = document.getElementById('stopwatch-display');
+                
+                if (setupScreen) setupScreen.classList.remove('hidden');
+                if (mainScreen) mainScreen.classList.add('hidden');
+                if (stopModal) stopModal.classList.add('hidden');
+                if (resultSection) resultSection.classList.add('hidden');
+                if (startBtn) startBtn.classList.remove('hidden');
+                if (stopBtn) stopBtn.classList.add('hidden');
+                if (stopwatchDisplay) stopwatchDisplay.textContent = '00:00';
+                
+                // 입력 필드 초기화
+                const startPageInput = document.getElementById('start-page');
+                const endPageInput = document.getElementById('end-page');
+                if (startPageInput) startPageInput.value = '1';
+                if (endPageInput) endPageInput.value = '50';
+            }
         }
 
         // 페이지 언로드 시 데이터 저장
@@ -506,11 +545,17 @@
         }
 
         function showStopModal() {
-            document.getElementById('stop-modal').classList.remove('hidden');
+            const modal = document.getElementById('stop-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+            }
         }
 
         function hideStopModal() {
-            document.getElementById('stop-modal').classList.add('hidden');
+            const modal = document.getElementById('stop-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
         }
 
         function stopStopwatch() {
