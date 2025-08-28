@@ -390,7 +390,23 @@
                 stopBtn.removeAttribute('onclick');
                 stopBtn.addEventListener('click', function() {
                     console.log('종료 버튼 클릭됨');
+                    
+                    // 일단 모달 시도
                     showStopModal();
+                    
+                    // 모달이 안 되면 3초 후 직접 확인
+                    setTimeout(function() {
+                        const modal = document.getElementById('stop-modal');
+                        const isModalVisible = modal && !modal.classList.contains('hidden') && modal.style.display !== 'none';
+                        
+                        if (!isModalVisible) {
+                            console.log('모달이 표시되지 않음, 직접 확인 대화상자 표시');
+                            if (confirm('스톱워치를 종료하시겠습니까?')) {
+                                console.log('사용자가 종료 확인함');
+                                stopStopwatch();
+                            }
+                        }
+                    }, 100);
                 });
             }
             
@@ -583,9 +599,14 @@
         }
 
         function showStopModal() {
+            console.log('showStopModal 함수 실행됨');
             const modal = document.getElementById('stop-modal');
             if (modal) {
                 modal.classList.remove('hidden');
+                modal.style.display = 'flex'; // 강제로 표시
+                console.log('모달 표시됨');
+            } else {
+                console.error('모달 요소를 찾을 수 없음');
             }
         }
 
