@@ -559,15 +559,38 @@
         }
 
         function stopStopwatch() {
-            clearInterval(stopwatchInterval);
-            isRunning = false;
-            document.getElementById('stop-modal').classList.add('hidden');
+            console.log('stopStopwatch 함수 실행됨');
             
+            // 스톱워치 정지
+            if (stopwatchInterval) {
+                clearInterval(stopwatchInterval);
+                stopwatchInterval = null;
+                console.log('스톱워치 인터벌 정리됨');
+            }
+            
+            isRunning = false;
+            
+            // 모달 숨기기
+            const modal = document.getElementById('stop-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+            
+            // UI 업데이트
+            const startBtn = document.getElementById('start-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            if (startBtn) startBtn.classList.remove('hidden');
+            if (stopBtn) stopBtn.classList.add('hidden');
+            
+            console.log('시점 배열 생성 시작');
             generateTimeArray();
             saveData();
         }
 
         function generateTimeArray() {
+            console.log('generateTimeArray 시작, pageTimings:', pageTimings);
+            console.log('startPage:', startPage, 'endPage:', endPage);
+            
             const timeArray = [];
             
             // 먼저 기록된 시간들을 초 단위로 변환
@@ -576,6 +599,8 @@
                 const [minutes, seconds] = pageTimings[page].split(':').map(Number);
                 recordedTimes[parseInt(page)] = minutes * 60 + seconds;
             }
+            
+            console.log('recordedTimes:', recordedTimes);
             
             // 각 페이지의 시간 계산
             for (let page = startPage; page <= endPage; page++) {
@@ -619,8 +644,18 @@
             }
             
             // 결과 표시
-            document.getElementById('result-section').classList.remove('hidden');
-            document.getElementById('result-array').textContent = JSON.stringify(timeArray, null, 2);
+            console.log('최종 timeArray:', timeArray);
+            
+            const resultSection = document.getElementById('result-section');
+            const resultArray = document.getElementById('result-array');
+            
+            if (resultSection && resultArray) {
+                resultSection.classList.remove('hidden');
+                resultArray.textContent = JSON.stringify(timeArray, null, 2);
+                console.log('결과 표시 완료');
+            } else {
+                console.error('결과 표시 요소를 찾을 수 없음:', {resultSection, resultArray});
+            }
         }
     </script>
 </body>
