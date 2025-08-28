@@ -363,54 +363,38 @@
         });
 
         function setupEventListeners() {
-            console.log('이벤트 리스너 설정 시작');
-            
             // 종료 확인 모달 버튼들
             const cancelBtn = document.getElementById('cancel-btn');
             const confirmStopBtn = document.getElementById('confirm-stop-btn');
             
             if (cancelBtn) {
-                cancelBtn.addEventListener('click', function() {
-                    console.log('취소 버튼 클릭됨');
-                    hideStopModal();
-                });
+                cancelBtn.addEventListener('click', hideStopModal);
             }
             
             if (confirmStopBtn) {
-                confirmStopBtn.addEventListener('click', function() {
-                    console.log('종료 확인 버튼 클릭됨');
-                    stopStopwatch();
-                });
+                confirmStopBtn.addEventListener('click', stopStopwatch);
             }
             
             // 종료 버튼 (메인 화면)
             const stopBtn = document.getElementById('stop-btn');
             if (stopBtn) {
-                // 기존 onclick 제거하고 새로 바인딩
                 stopBtn.removeAttribute('onclick');
                 stopBtn.addEventListener('click', function() {
-                    console.log('종료 버튼 클릭됨');
-                    
-                    // 일단 모달 시도
                     showStopModal();
                     
-                    // 모달이 안 되면 3초 후 직접 확인
+                    // 모달이 제대로 표시되지 않을 경우 대안 제공
                     setTimeout(function() {
                         const modal = document.getElementById('stop-modal');
                         const isModalVisible = modal && !modal.classList.contains('hidden') && modal.style.display !== 'none';
                         
                         if (!isModalVisible) {
-                            console.log('모달이 표시되지 않음, 직접 확인 대화상자 표시');
                             if (confirm('스톱워치를 종료하시겠습니까?')) {
-                                console.log('사용자가 종료 확인함');
                                 stopStopwatch();
                             }
                         }
                     }, 100);
                 });
             }
-            
-            console.log('이벤트 리스너 설정 완료');
         }
 
         // 페이지 로드 시 완전 초기화 후 필요시 데이터 복원
@@ -437,7 +421,7 @@
                     }
                 }
             } catch (error) {
-                console.log('세션 복원 중 오류:', error);
+                // 세션 복원 실패 시 초기 상태 유지
             }
             
             // 유효한 세션이 없으면 초기 상태 유지
@@ -559,7 +543,6 @@
                         }
                     }
                 } catch (error) {
-                    console.log('스톱워치 복원 중 오류:', error);
                     resetToInitialState();
                 }
             }
@@ -599,14 +582,10 @@
         }
 
         function showStopModal() {
-            console.log('showStopModal 함수 실행됨');
             const modal = document.getElementById('stop-modal');
             if (modal) {
                 modal.classList.remove('hidden');
-                modal.style.display = 'flex'; // 강제로 표시
-                console.log('모달 표시됨');
-            } else {
-                console.error('모달 요소를 찾을 수 없음');
+                modal.style.display = 'flex';
             }
         }
 
@@ -614,26 +593,21 @@
             const modal = document.getElementById('stop-modal');
             if (modal) {
                 modal.classList.add('hidden');
+                modal.style.display = 'none';
             }
         }
 
         function stopStopwatch() {
-            console.log('stopStopwatch 함수 실행됨');
-            
             // 스톱워치 정지
             if (stopwatchInterval) {
                 clearInterval(stopwatchInterval);
                 stopwatchInterval = null;
-                console.log('스톱워치 인터벌 정리됨');
             }
             
             isRunning = false;
             
             // 모달 숨기기
-            const modal = document.getElementById('stop-modal');
-            if (modal) {
-                modal.classList.add('hidden');
-            }
+            hideStopModal();
             
             // UI 업데이트
             const startBtn = document.getElementById('start-btn');
@@ -641,15 +615,11 @@
             if (startBtn) startBtn.classList.remove('hidden');
             if (stopBtn) stopBtn.classList.add('hidden');
             
-            console.log('시점 배열 생성 시작');
             generateTimeArray();
             saveData();
         }
 
         function generateTimeArray() {
-            console.log('generateTimeArray 시작, pageTimings:', pageTimings);
-            console.log('startPage:', startPage, 'endPage:', endPage);
-            
             const timeArray = [];
             
             // 먼저 기록된 시간들을 초 단위로 변환
@@ -658,8 +628,6 @@
                 const [minutes, seconds] = pageTimings[page].split(':').map(Number);
                 recordedTimes[parseInt(page)] = minutes * 60 + seconds;
             }
-            
-            console.log('recordedTimes:', recordedTimes);
             
             // 각 페이지의 시간 계산
             for (let page = startPage; page <= endPage; page++) {
@@ -703,17 +671,12 @@
             }
             
             // 결과 표시
-            console.log('최종 timeArray:', timeArray);
-            
             const resultSection = document.getElementById('result-section');
             const resultArray = document.getElementById('result-array');
             
             if (resultSection && resultArray) {
                 resultSection.classList.remove('hidden');
                 resultArray.textContent = JSON.stringify(timeArray, null, 2);
-                console.log('결과 표시 완료');
-            } else {
-                console.error('결과 표시 요소를 찾을 수 없음:', {resultSection, resultArray});
             }
         }
     </script>
