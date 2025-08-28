@@ -313,8 +313,8 @@
         <div class="modal-content">
             <h3>스톱워치를 종료하시겠습니까?</h3>
             <div class="modal-buttons">
-                <button class="btn btn-cancel" onclick="hideStopModal()">취소</button>
-                <button class="btn" onclick="stopStopwatch()">종료</button>
+                <button class="btn btn-cancel" id="cancel-btn">취소</button>
+                <button class="btn" id="confirm-stop-btn">종료</button>
             </div>
         </div>
     </div>
@@ -356,10 +356,46 @@
             return false;
         }
 
-        // DOM 준비 시 즉시 초기화
+        // DOM 준비 시 즉시 초기화 및 이벤트 바인딩
         document.addEventListener('DOMContentLoaded', function() {
             forceResetToInitialState();
+            setupEventListeners();
         });
+
+        function setupEventListeners() {
+            console.log('이벤트 리스너 설정 시작');
+            
+            // 종료 확인 모달 버튼들
+            const cancelBtn = document.getElementById('cancel-btn');
+            const confirmStopBtn = document.getElementById('confirm-stop-btn');
+            
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function() {
+                    console.log('취소 버튼 클릭됨');
+                    hideStopModal();
+                });
+            }
+            
+            if (confirmStopBtn) {
+                confirmStopBtn.addEventListener('click', function() {
+                    console.log('종료 확인 버튼 클릭됨');
+                    stopStopwatch();
+                });
+            }
+            
+            // 종료 버튼 (메인 화면)
+            const stopBtn = document.getElementById('stop-btn');
+            if (stopBtn) {
+                // 기존 onclick 제거하고 새로 바인딩
+                stopBtn.removeAttribute('onclick');
+                stopBtn.addEventListener('click', function() {
+                    console.log('종료 버튼 클릭됨');
+                    showStopModal();
+                });
+            }
+            
+            console.log('이벤트 리스너 설정 완료');
+        }
 
         // 페이지 로드 시 완전 초기화 후 필요시 데이터 복원
         window.addEventListener('load', function() {
@@ -380,6 +416,7 @@
                         document.getElementById('end-page').value = endPage;
                         initializePages();
                         restoreStopwatch();
+                        setupEventListeners(); // 이벤트 리스너 재설정
                         return;
                     }
                 }
@@ -456,6 +493,7 @@
             document.getElementById('main-screen').classList.remove('hidden');
             
             generatePageGrid();
+            setupEventListeners(); // 이벤트 리스너 재설정
             saveData();
         }
 
